@@ -34,10 +34,10 @@ end
 # end
 
 function Base.show(io::IO, k::CustomMOKernel)
-    return print(io, "Semi-parametric Latent Factor Multi-Output Kernel")
+    return print(io, "Custom Multi-Output Kernel")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", k::CustomMOKernel)
-    print(io, "Semi-parametric Latent Factor Multi-Output Kernel\n\tgᵢ: ")
+    print(io, "Custom Multi-Output Kernel\n\tgᵢ: ")
     return join(io, k.g, "\n\t\t")
 end

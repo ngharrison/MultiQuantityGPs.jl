@@ -14,6 +14,11 @@ include("CustomKernel.jl")
 
 ## Mean and kernel stuff
 
+"""
+$(TYPEDSIGNATURES)
+
+Creates a quantity-specific constant mean function from the GP hyperparameters.
+"""
 multiMean(θ) = CustomMean(x->θ.μ[x[2]])
 
 """
@@ -37,11 +42,28 @@ This function creates the kernel function used within the GP.
 multiKernel(θ) = IntrinsicCoregionMOKernel(kernel=with_lengthscale(SqExponentialKernel(), θ.ℓ^2),
                                            B=fullyConnectedCovMat(θ.σ))
 
+"""
+$(TYPEDSIGNATURES)
+
+Creates a kernel function for the GP, which is similar to a [`multiKernel`](@ref) but instead uses a many-to-one quantity covariance matrix.
+"""
 mtoKernel(θ) = IntrinsicCoregionMOKernel(kernel=with_lengthscale(SqExponentialKernel(), θ.ℓ^2),
                                            B=manyToOneCovMat(θ.σ))
 
+"""
+$(TYPEDSIGNATURES)
+
+Creates a semi-parametric latent factor model (SLFM) kernel function for the GP.
+"""
 slfmKernel(θ) = SLFMMOKernel(with_lengthscale.(SqExponentialKernel(), θ.ℓ.^2), θ.σ)
 
+"""
+$(TYPEDSIGNATURES)
+
+Creates a custom kernel function for the GP similar to the [`slfmKernel`](@ref) but with matrices of length-scales and amplitudes.
+
+This one does not work and is likely not theoretically valid.
+"""
 customKernel(θ) = CustomMOKernel(with_lengthscale.(SqExponentialKernel(), fullyConnectedCovMat(θ.ℓ)),
                                  fullyConnectedCovMat(θ.σ))
 
@@ -75,6 +97,11 @@ function fullyConnectedCovMat(a)
     return A
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Gives the number of hyperparameters for to fill the [`fullyConnectedCovMat`](@ref).
+"""
 fullyConnectedCovNum(num_outputs) = (num_outputs+1)*num_outputs÷2
 
 """
@@ -111,6 +138,11 @@ function manyToOneCovMat(a)
     return A
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Gives the number of hyperparameters for to fill the [`manyToOneCovMat`](@ref).
+"""
 manyToOneCovNum(num_outputs) = 2*num_outputs - 1
 
 """

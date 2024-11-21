@@ -12,3 +12,7 @@ Documentation for [MultiQuantityGPs](https://github.com/ngharrison/MultiQuantity
 ```@autodocs
 Modules = [MultiQuantityGPs]
 ```
+
+```@autodocs
+Modules = [Kernels]
+```
