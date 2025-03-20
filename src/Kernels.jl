@@ -1,7 +1,7 @@
 module Kernels
 
 using LinearAlgebra: eigmin
-using Statistics: I, mean
+using Statistics: I, mean, var
 using AbstractGPs: with_lengthscale, SqExponentialKernel, IntrinsicCoregionMOKernel, CustomMean
 using DocStringExtensions: TYPEDSIGNATURES
 
@@ -151,8 +151,11 @@ $(TYPEDSIGNATURES)
 Creates the structure of hyperparameters for a MTGP and gives them initial values.
 """
 function initHyperparams(X, Y_vals, bounds, N, ::typeof(multiKernel); kwargs...)
-    n = fullyConnectedCovNum(N)
-    σ = 0.5/sqrt(2) * ones(n)
+    # fill so that matrix variances match measured values
+    σ = mapreduce(vcat, 1:N) do i
+        arr = [y for ((l, q), y) in zip(X, Y_vals) if q==i]
+        ones(i) * (length(arr) > 1 ? sqrt(var(arr)/i) : 0.5/sqrt(2))
+    end
     ℓ = mean(bounds.upper .- bounds.lower)
     return (; σ, ℓ, kwargs...)
 end
@@ -165,7 +168,14 @@ This is for a specialized quantity covariance matrix with separation.
 """
 function initHyperparams(X, Y_vals, bounds, N, ::typeof(mtoKernel); kwargs...)
     n = manyToOneCovNum(N)
-    σ = 0.5/sqrt(2) * ones(n)
+    # fill so that matrix variances match measured values
+    σ = zeros(n)
+    arr = [y for ((l, q), y) in zip(X, Y_vals) if q==1]
+    σ[2:2:2N-1] .= σ[1] = (length(arr) > 1 ? sqrt(var(arr)/N) : 0.5/sqrt(2))
+    for i in 2:N
+        arr = [y for ((l, q), y) in zip(X, Y_vals) if q==i]
+        σ[2i-1] = (length(arr) > 1 ? sqrt(var(arr)) : 0.5/sqrt(2))
+    end
     ℓ = mean(bounds.upper .- bounds.lower)
     return (; σ, ℓ, kwargs...)
 end
