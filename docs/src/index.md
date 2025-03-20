@@ -51,8 +51,8 @@ The MQGP is created from the samples and bounds. It's hyperparameter values are 
 
 ```@example
 mqgp = MQGP(samples, bounds;
-            noise=(value=zeros(2), learned=true),
-            means=(use=true, learned=true))
+            noise_value=zeros(2), noise_learn=true,
+            means_use=true, means_learn=true)
 ```
 
 Values from the MQGP can be viewed, such as the noise hyperparameters:

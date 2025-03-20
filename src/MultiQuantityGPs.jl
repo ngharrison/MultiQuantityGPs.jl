@@ -95,16 +95,16 @@ beliefModel = MQGP([M.prior_samples; samples], bounds)
 ```
 """
 function MQGP(samples, bounds::Bounds; N=maximum(s->s.x[2], samples),
-                     kernel=multiKernel, means=(use=true, learned=true),
-                     noise=(value=0.0, learned=false),
-                     use_cond_pdf=false)
+              kernel=multiKernel, means_use=true, means_learn=true,
+              noise_value=0.0, noise_learn=false,
+              use_cond_pdf=false)
     # set up training data
     X, Y_vals, Y_errs = extractSampleVals(samples)
 
     # choose noise and mean
-    σn = (noise.learned ? noise.value : fixed(noise.value))
-    μ = (means.use && means.learned ? calcMeans(X, Y_vals, N) :
-         fixed(means.use ? calcMeans(X, Y_vals, N) : zeros(N)))
+    σn = (noise_learn ? noise_value : fixed(noise_value))
+    μ = (means_use && means_learn ? calcMeans(X, Y_vals, N) :
+         fixed(means_use ? calcMeans(X, Y_vals, N) : zeros(N)))
     θ0 = initHyperparams(X, Y_vals, bounds, N, kernel; μ, σn)
 
     @debug "calculated means:" calcMeans(X, Y_vals, N)
