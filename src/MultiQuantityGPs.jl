@@ -96,7 +96,7 @@ beliefModel = MQGP([M.prior_samples; samples], bounds)
 """
 function MQGP(samples, bounds::Bounds; N=maximum(s->s.x[2], samples),
               kernel=multiKernel, means_use=true, means_learn=true,
-              noise_value=0.0, noise_learn=false,
+              noise_value=zeros(N), noise_learn=false,
               use_cond_pdf=false)
     # set up training data
     X, Y_vals, Y_errs = extractSampleVals(samples)
