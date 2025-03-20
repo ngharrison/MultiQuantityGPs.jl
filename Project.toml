@@ -1,7 +1,7 @@
 name = "MultiQuantityGPs"
 uuid = "f6349cb8-2139-4a62-bb23-95f1cd2c4c3a"
 authors = ["Nicholas Harrison"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 AbstractGPs = "99985d1d-32ba-4be9-9821-2ec096f28918"
