@@ -3,6 +3,7 @@ module Kernels
 using LinearAlgebra: eigmin
 using Statistics: I, mean, var
 using AbstractGPs: with_lengthscale, SqExponentialKernel, IntrinsicCoregionMOKernel, CustomMean
+using ParameterHandling: fixed
 using DocStringExtensions: TYPEDSIGNATURES
 
 export singleKernel, multiKernel, slfmKernel, mtoKernel,
@@ -154,7 +155,14 @@ function initHyperparams(X, Y_vals, bounds, N, ::typeof(multiKernel); kwargs...)
     # fill so that matrix variances match measured values
     σ = mapreduce(vcat, 1:N) do i
         arr = [y for ((l, q), y) in zip(X, Y_vals) if q==i]
-        ones(i) * (length(arr) > 1 ? sqrt(var(arr)/i) : 0.5/sqrt(2))
+        val = if length(arr) == 0
+            fixed(0.5/sqrt(2))
+        elseif length(arr) == 1
+            0.5/sqrt(2)
+        else
+            sqrt(var(arr)/i)
+        end
+        fill(val, i)
     end
     ℓ = mean(bounds.upper .- bounds.lower)
     return (; σ, ℓ, kwargs...)

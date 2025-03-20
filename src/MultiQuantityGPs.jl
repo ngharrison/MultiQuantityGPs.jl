@@ -101,10 +101,30 @@ function MQGP(samples, bounds::Bounds; N=maximum(s->s.x[2], samples),
     # set up training data
     X, Y_vals, Y_errs = extractSampleVals(samples)
 
-    # choose noise and mean
-    σn = (noise.learned ? noise.value : fixed(noise.value))
-    μ = (means.use && means.learned ? calcMeans(X, Y_vals, N) :
-         fixed(means.use ? calcMeans(X, Y_vals, N) : zeros(N)))
+    # choose mean and noise
+    # if a mean is nan, that indicates there are no measurements for that
+    # quantity and its hyperparameters should not be trained
+    μ = if means.use
+        ms = calcMeans(X, Y_vals, N)
+        if means.learned
+            [(isnan(m) ? fixed(m) : m) for m in ms]
+        else
+            fixed(ms)
+        end
+    else
+        fixed(zeros(N))
+    end
+
+    σn = if noise.learned
+        if noise.value isa AbstractArray
+            [(isnan(value(m)) ? fixed(NaN) : n) for (m, n) in zip(μ, noise.value)]
+        else
+            noise.value
+        end
+    else
+        fixed(noise.value)
+    end
+
     θ0 = initHyperparams(X, Y_vals, bounds, N, kernel; μ, σn)
 
     @debug "calculated means:" calcMeans(X, Y_vals, N)
