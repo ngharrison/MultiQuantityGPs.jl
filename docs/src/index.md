@@ -50,7 +50,7 @@ samples = [qnt1_samples; qnt2_samples]
 The MQGP is created from the samples and bounds. It's hyperparameter values are learned.
 
 ```@example
-mqgp = MQGP(samples, bounds;
+mqgp = MQGP(samples; bounds,
             noise_value=zeros(2), noise_learn=true,
             means_use=true, means_learn=true)
 ```
