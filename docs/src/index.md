@@ -12,7 +12,7 @@ Following is a quick example of the main functionality of this package.
 First, the package is loaded and 2D region bounds are chosen.
 
 ```@example
-using MultiQuantityGPs: MQGP, quantityCovMat, quantityCorMat
+using MultiQuantityGPs: MQGP, quantityCovMat, quantityCorMat, Sample
 
 bounds = (
     lower = [0.0, 0.0],
@@ -33,7 +33,7 @@ pos1 = [[i,j] .+ rand(2)/n for i in 0:1/n:1-1/n for j in 0:1/n:1-1/n]
 # randomly create first quantity values
 f = (x1,x2) -> sin(7*x1) + 2*x2
 f1 = (x1,x2) -> f(x1,x2) + 1/2*randn()
-qnt1_samples = [(; x=(p,1), y=f1(p...)) for p in pos1]
+qnt1_samples = [Sample((p,1), f1(p...)) for p in pos1]
 
 # latin hypercube create second quantity sample positions
 n = 5
@@ -41,7 +41,7 @@ pos2 = [[i,j] .+ rand(2)/n for i in 0:1/n:1-1/n for j in 0:1/n:1-1/n]
 
 # randomly create second quantity sample values
 f2 = (x1,x2) -> -10*f(x1,x2) + 3*randn()
-qnt2_samples = [(; x=(p,2), y=f2(p...)) for p in pos2]
+qnt2_samples = [Sample((p,2), f2(p...)) for p in pos2]
 
 # full sample collection
 samples = [qnt1_samples; qnt2_samples]

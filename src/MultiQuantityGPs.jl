@@ -15,7 +15,7 @@ using AbstractGPs: GP, posterior, mean_and_var, mean_and_cov,
 using IrrationalConstants: log2π
 using Optim: optimize, Options, NelderMead, LBFGS
 using ParameterHandling: value_flatten, fixed, value
-using DocStringExtensions: TYPEDSIGNATURES, TYPEDEF, EXPORTS
+using DocStringExtensions: TYPEDSIGNATURES, TYPEDEF, TYPEDFIELDS, EXPORTS
 
 include("LinearModels.jl")
 include("Kernels.jl")
@@ -34,9 +34,33 @@ const Location = Vector{Float64}
 
 """
 $(TYPEDEF)
-Sample input, the combination of: ([`Location`](@ref), sensor index)
+Sample input, the combination of: ([`Location`](@ref), quantity index)
 """
 const SampleInput = Tuple{Location, Int}
+
+"""
+$(TYPEDEF)
+Value of sample measurement, the measurement mean and standard deviation
+"""
+const SampleOutput = Tuple{Float64, Float64}
+
+"""
+Struct to hold the input and output of a sample.
+
+Fields:
+$(TYPEDFIELDS)
+"""
+struct Sample{T}
+    "the sample input, usually a location and quantity id"
+    x::SampleInput
+    "the sample output or observation, a scalar"
+    y::T
+end
+
+# helpers
+getLoc(s::Sample) = s.x[1]
+getQuant(s::Sample) = s.x[2]
+getObs(s::Sample) = s.y
 
 """
 $(TYPEDEF)
@@ -94,9 +118,9 @@ value for all samples or a vector of values, one for each sample.
 beliefModel = MQGP([prior_samples; samples]; bounds)
 ```
 """
-function MQGP(samples;
-              bounds::Bounds=Bounds(extrema(s->s.x[1], samples)),
-              N=maximum(s->s.x[2], samples),
+function MQGP(samples::AbstractArray{<:Sample};
+              bounds::Bounds=Bounds(extrema(getLoc, samples)),
+              N=maximum(getQuant, samples),
               kernel=multiKernel,
               means_use=true, means_learn=true,
               noise_value=zeros(N), noise_learn=false,
@@ -125,8 +149,8 @@ function MQGP(samples;
 end
 
 # Produce a belief model with pre-chosen hyperparams
-function MQGP(samples, θ; N=maximum(s->s.x[2], samples),
-                     kernel=multiKernel)
+function MQGP(samples::AbstractArray{<:Sample}, θ;
+              N=maximum(getQuant, samples), kernel=multiKernel)
     X, Y_vals, Y_errs = extractSampleVals(samples)
 
     fx = buildPriorGP(X, Y_errs, kernel, θ)
@@ -135,7 +159,7 @@ function MQGP(samples, θ; N=maximum(s->s.x[2], samples),
     return MQGP(f_post, N, kernel, θ)
 end
 
-function extractSampleVals(samples)
+function extractSampleVals(samples::AbstractArray{<:Sample})
     X = getfield.(samples, :x)
     Y = getfield.(samples, :y)
 
