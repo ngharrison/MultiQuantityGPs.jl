@@ -1,5 +1,4 @@
 using MultiQuantityGPs
-using MultiQuantityGPs: SQSample, MQSample, getLoc
 using Test
 using Aqua
 using JET

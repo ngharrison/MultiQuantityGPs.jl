@@ -24,7 +24,8 @@ using ..Kernels: multiMean, singleKernel, multiKernel, fullyConnectedCovNum,
                  slfmKernel, fullyConnectedCovMat, manyToOneCovNum, manyToOneCovMat,
                  initHyperparams, mtoKernel
 
-export MQGP, quantityCovMat, quantityCorMat, meanDerivAndVar, fullCov
+export MQGP, quantityCovMat, quantityCorMat, meanDerivAndVar, fullCov,
+       SQSample, MQSample, getLoc, getQuant, getObs
 
 """
 $(TYPEDEF)
@@ -69,12 +70,40 @@ const MQSample = @NamedTuple begin
 end
 
 # helpers
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the location for the sample.
+"""
 getLoc(s::SQSample) = s.x
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the observation for the sample.
+"""
 getObs(s::SQSample) = s.y
 
-# helpers
+"""
+$(TYPEDSIGNATURES)
+
+Get the location for the sample.
+"""
 getLoc(s::MQSample) = s.x[1]
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the quantity for the sample.
+"""
 getQuant(s::MQSample) = s.x[2]
+
+"""
+$(TYPEDSIGNATURES)
+
+Get the observation for the sample.
+"""
 getObs(s::MQSample) = s.y
 
 """
