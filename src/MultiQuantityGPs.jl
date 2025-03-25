@@ -95,7 +95,7 @@ beliefModel = MQGP([prior_samples; samples]; bounds)
 ```
 """
 function MQGP(samples;
-              bounds::Bounds=extrema(s->s.x[1], samples),
+              bounds::Bounds=Bounds(extrema(s->s.x[1], samples)),
               N=maximum(s->s.x[2], samples),
               kernel=multiKernel,
               means_use=true, means_learn=true,
