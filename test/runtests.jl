@@ -1,5 +1,5 @@
 using MultiQuantityGPs
-using MultiQuantityGPs: MQSample, getLoc
+using MultiQuantityGPs: SQSample, MQSample, getLoc
 using Test
 using Aqua
 using JET
@@ -30,4 +30,26 @@ using Statistics
         @test all(mqgp(([.25, .3], 1)) .≈ (0.8100073121265535, 0.5990697034625645))
         @test all(mqgp(([.25, .3], 2)) .≈ (0.45840900620997277, 0.3484339143061906))
     end
+
+    @testset "Hierarchical sample data structure" begin
+        sample_collection = [
+            [
+                SQSample(([0.1, 0.8], 1.4)),
+                SQSample(([0.5, 0.4], 0.2)),
+            ],
+            [
+                SQSample(([0.2, 0.2], 0.8)),
+                SQSample(([0.9, 0.1], 0.1)),
+            ],
+        ]
+
+        stds = std([getLoc(s) for q in sample_collection for s in q])
+        bounds = (lower=zero(stds), upper=stds)
+
+        mqgp = MQGP(sample_collection; bounds, noise_value=0.0, noise_learn=true)
+
+        @test all(mqgp(([.25, .3], 1)) .≈ (0.8100073121265535, 0.5990697034625645))
+        @test all(mqgp(([.25, .3], 2)) .≈ (0.45840900620997277, 0.3484339143061906))
+    end
+
 end
