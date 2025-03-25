@@ -102,6 +102,13 @@ function Base.show(io::IO, ::MIME"text/plain", bm::MQGP)
     print(io, "MQGP:\n\tθ = $(bm.θ)")
 end
 
+const SQSample = Tuple{Location, Float64}
+
+function MQGP(sample_collection::AbstractArray{<:AbstractArray{SQSample}}; kwargs...)
+    flattened_samples = [Sample((s[1], q), s[2]) for (q, samples) in enumerate(sample_collection) for s in samples]
+    return MQGP(flattened_samples; kwargs...)
+end
+
 """
 $(TYPEDSIGNATURES)
 
