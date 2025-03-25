@@ -34,33 +34,48 @@ const Location = Vector{Float64}
 
 """
 $(TYPEDEF)
-Sample input, the combination of: ([`Location`](@ref), quantity index)
+Multi-quantity sample input, the combination of: ([`Location`](@ref), quantity index)
 """
-const SampleInput = Tuple{Location, Int}
+const MQSampleInput = Tuple{Location, Int}
 
 """
 $(TYPEDEF)
-Value of sample measurement, the measurement mean and standard deviation
+Type of noise-free sample measurement
 """
-const SampleOutput = Tuple{Float64, Float64}
+const SampleOutput = Float64
 
 """
-Struct to hold the input and output of a sample.
-
-Fields:
-$(TYPEDFIELDS)
+$(TYPEDEF)
+Type of sample measurement with noise, the measurement mean and standard deviation
 """
-struct Sample{T}
-    "the sample input, usually a location and quantity id"
-    x::SampleInput
-    "the sample output or observation, a scalar"
-    y::T
+const NoisySampleOutput = Tuple{Float64, Float64}
+
+"""
+$(TYPEDEF)
+Type of sample measurement with noise, the measurement mean and standard deviation
+"""
+const SQSample = @NamedTuple begin
+    x::Location
+    y::SampleOutput
+end
+
+"""
+$(TYPEDEF)
+Type of sample measurement with noise, the measurement mean and standard deviation
+"""
+const MQSample = @NamedTuple begin
+    x::MQSampleInput
+    y::SampleOutput
 end
 
 # helpers
-getLoc(s::Sample) = s.x[1]
-getQuant(s::Sample) = s.x[2]
-getObs(s::Sample) = s.y
+getLoc(s::SQSample) = s.x
+getObs(s::SQSample) = s.y
+
+# helpers
+getLoc(s::MQSample) = s.x[1]
+getQuant(s::MQSample) = s.x[2]
+getObs(s::MQSample) = s.y
 
 """
 $(TYPEDEF)
@@ -69,8 +84,8 @@ The bounds of the region. Consists of the lower and upper bounds, each a list of
 floating-point values.
 """
 const Bounds = @NamedTuple begin
-    lower::Vector{Float64}
-    upper::Vector{Float64}
+    lower::Location
+    upper::Location
 end
 
 """
@@ -102,10 +117,10 @@ function Base.show(io::IO, ::MIME"text/plain", bm::MQGP)
     print(io, "MQGP:\n\tθ = $(bm.θ)")
 end
 
-const SQSample = Tuple{Location, Float64}
-
 function MQGP(sample_collection::AbstractArray{<:AbstractArray{SQSample}}; kwargs...)
-    flattened_samples = [Sample((s[1], q), s[2]) for (q, samples) in enumerate(sample_collection) for s in samples]
+    flattened_samples = [MQSample(((s[1], q), s[2]))
+                         for (q, samples) in enumerate(sample_collection)
+                             for s in samples]
     return MQGP(flattened_samples; kwargs...)
 end
 
@@ -125,7 +140,7 @@ value for all samples or a vector of values, one for each sample.
 beliefModel = MQGP([prior_samples; samples]; bounds)
 ```
 """
-function MQGP(samples::AbstractArray{<:Sample};
+function MQGP(samples::AbstractArray{<:MQSample};
               bounds::Bounds=Bounds(extrema(getLoc, samples)),
               N=maximum(getQuant, samples),
               kernel=multiKernel,
@@ -156,7 +171,7 @@ function MQGP(samples::AbstractArray{<:Sample};
 end
 
 # Produce a belief model with pre-chosen hyperparams
-function MQGP(samples::AbstractArray{<:Sample}, θ;
+function MQGP(samples::AbstractArray{<:MQSample}, θ;
               N=maximum(getQuant, samples), kernel=multiKernel)
     X, Y_vals, Y_errs = extractSampleVals(samples)
 
@@ -166,7 +181,7 @@ function MQGP(samples::AbstractArray{<:Sample}, θ;
     return MQGP(f_post, N, kernel, θ)
 end
 
-function extractSampleVals(samples::AbstractArray{<:Sample})
+function extractSampleVals(samples::AbstractArray{<:MQSample})
     X = getfield.(samples, :x)
     Y = getfield.(samples, :y)
 
@@ -212,11 +227,11 @@ X = [([.1, .2], 1),
 μ, σ = beliefModel(X) # result: [μ1, μ2], [σ1, σ2]
 ```
 """
-function (bm::MQGP)(x::SampleInput; kwargs...)
+function (bm::MQGP)(x::MQSampleInput; kwargs...)
     return only.(bm([x]); kwargs...)
 end
 
-function (bm::MQGP)(X::AbstractArray{SampleInput})
+function (bm::MQGP)(X::AbstractArray{MQSampleInput})
     μ, σ² = reshape.(mean_and_var(bm.gp, vec(X)), Ref(size(X)))
     return μ, .√clamp!(σ², 0.0, Inf) # avoid negative variances
 end
@@ -226,7 +241,7 @@ $(TYPEDSIGNATURES)
 
 Returns the full covariance matrix for the belief model.
 """
-function fullCov(bm::MQGP, X::AbstractArray{SampleInput})
+function fullCov(bm::MQGP, X::AbstractArray{MQSampleInput})
     return cov(bm.gp, X) + I*√eps() # avoid negative eigenvalues
 end
 
@@ -313,11 +328,11 @@ $(TYPEDSIGNATURES)
 
 Returns the normed gradient of the mean of the belief model and its variance.
 """
-function meanDerivAndVar(bm::MQGP, x::SampleInput)
+function meanDerivAndVar(bm::MQGP, x::MQSampleInput)
     return only.(meanDerivAndVar(bm, [x]))
 end
 
-function meanDerivAndVar(bm::MQGP, X::AbstractArray{SampleInput})
+function meanDerivAndVar(bm::MQGP, X::AbstractArray{MQSampleInput})
     Xv = vec(X)
     dims = size(X)
     f = bm.gp

@@ -1,5 +1,5 @@
 using MultiQuantityGPs
-using MultiQuantityGPs: Sample, getLoc
+using MultiQuantityGPs: MQSample, getLoc
 using Test
 using Aqua
 using JET
@@ -16,10 +16,10 @@ using Statistics
 
     @testset "Simple functionality test" begin
         samples = [
-            Sample(([0.1, 0.8], 1), 1.4),
-            Sample(([0.5, 0.4], 1), 0.2),
-            Sample(([0.2, 0.2], 2), 0.8),
-            Sample(([0.9, 0.1], 2), 0.1),
+            MQSample((x=([0.1, 0.8], 1), y=1.4)),
+            MQSample((x=([0.5, 0.4], 1), y=0.2)),
+            MQSample((x=([0.2, 0.2], 2), y=0.8)),
+            MQSample((x=([0.9, 0.1], 2), y=0.1)),
         ]
 
         stds = std([getLoc(s) for s in samples])
